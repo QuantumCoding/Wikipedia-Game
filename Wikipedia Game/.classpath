@@ -4,7 +4,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/JXBrowser/lib/jxbrowser-6.5.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/Wikipedia%20Game/lib/JXBrowser/doc.zip!/doc"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/Wikipedia%20Game/lib/JXBrowser/doc.zip!/doc/javadoc"/>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="Wikipedia Game/lib/JXBrowser/lib"/>
 		</attributes>
 	</classpathentry>
