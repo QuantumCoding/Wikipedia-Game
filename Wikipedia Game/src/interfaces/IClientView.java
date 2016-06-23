@@ -7,5 +7,11 @@ public interface IClientView {
 	public void playerComplete(String newPage);	
 	public void pauseRequested(String newPage);
 	
+	public void changeTime(long milliSeconds);
+	public void setClicks(int clickCount);
+
+	public void setStartPage(String page);
+	public void addDesitination(String page);
+	
 	public IWebBrowser getBrowser();
 }
