@@ -21,11 +21,13 @@ public class Server implements Runnable {
 	private int port, size;
 	
 	private ClientConnection[] connections;
+	private int connectedCount;
 	
 	private boolean running;
 	private Thread thread;
 	
 	private ArrayList<IServerMessageProcesser> messageProcess;
+	private ArrayList<IClientConnectedListener> connectionListeners;
 	
 	public Server(InetAddress address) throws IOException { this(address, DEFAULT_PORT, DEFAULT_SIZE); }
 	public Server(InetAddress address, int port) throws IOException { this(address, port, DEFAULT_SIZE); }
@@ -36,10 +38,15 @@ public class Server implements Runnable {
 		this.size = size;
 		
 		messageProcess = new ArrayList<>();
+		connectionListeners = new ArrayList<>();
 	}
 	
 	public void addMessageProcesser(IServerMessageProcesser processer) {
 		this.messageProcess.add(processer);
+	}
+	
+	public void addConnectionListener(IClientConnectedListener listener) {
+		this.connectionListeners.add(listener);
 	}
 	
 	public void connect() throws IOException {
@@ -74,6 +81,10 @@ public class Server implements Runnable {
 				
 				connections[avalableIndex] = new ClientConnection(this, connection);
 				connections[avalableIndex].connect();
+				connectedCount ++;
+				
+				for(IClientConnectedListener listener : connectionListeners) 
+					listener.clientConnected(connections[avalableIndex]);
 				
 			} catch(SocketTimeoutException se) {
 				
@@ -94,9 +105,17 @@ public class Server implements Runnable {
 	}
 	
 	protected void disconnected(ClientConnection connection) {
+		for(IClientConnectedListener listener : connectionListeners) {
+			try { listener.clientDisconnected(connection); } 
+			catch(IOException e) { e.printStackTrace(); }
+		}
+		
 		for(int i = 0; i < size; i ++) {
-			if(connections[i] == connection)
+			if(connections[i] == connection) {
 				connections[i] = null;
+				connectedCount --;
+				return;
+			}
 		}
 	}
 	
@@ -111,6 +130,7 @@ public class Server implements Runnable {
 
 	public boolean isRunning() { return running; }
 	public ClientConnection[] getConnections() { return connections; }
+	public int getConnectedCount() { return connectedCount; }
 	
 	public static void main(String[] args) throws UnknownHostException, IOException {
 		Server server = new Server(Inet4Address.getLocalHost());

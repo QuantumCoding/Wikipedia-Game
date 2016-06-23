@@ -5,5 +5,8 @@ public interface IClientInterface {
 	public void acceptPause();
 	public void rejectPause();
 	
+	public void quit();
+	public void disconnect();
+	
 	public void siteChanged(String newSite, String oldSite);
 }
