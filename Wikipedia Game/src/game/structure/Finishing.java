@@ -1,7 +1,7 @@
 package game.structure;
 
 import game.DataPassing;
-import server.ClientConnection;
+import networking.server.ClientConnection;
 
 public class Finishing {
 	private ClientConnection connection;

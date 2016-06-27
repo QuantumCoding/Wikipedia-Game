@@ -1,4 +1,4 @@
-package server;
+package networking.server;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -10,7 +10,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
-import client.Client;
+import networking.client.Client;
 
 public class Server implements Runnable {
 	public static final int DEFAULT_PORT = 1024;

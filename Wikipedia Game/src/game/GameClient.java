@@ -3,11 +3,11 @@ package game;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import client.Client;
-import client.IClientMessageProcesser;
 import game.structure.ILogger;
 import interfaces.IClientInterface;
 import interfaces.IClientView;
+import networking.client.Client;
+import networking.client.IClientMessageProcesser;
 
 public class GameClient implements IClientMessageProcesser, IClientInterface {
 	private Client client;

@@ -6,10 +6,10 @@ import java.util.HashSet;
 
 import game.structure.Finishing;
 import game.structure.Round;
-import server.ClientConnection;
-import server.IClientConnectedListener;
-import server.IServerMessageProcesser;
-import server.Server;
+import networking.server.ClientConnection;
+import networking.server.IClientConnectedListener;
+import networking.server.IServerMessageProcesser;
+import networking.server.Server;
 
 public class GameServer implements IServerMessageProcesser, IClientConnectedListener {
 	private Server server;

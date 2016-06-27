@@ -1,4 +1,4 @@
-package client;
+package networking.client;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -7,7 +7,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 
-import server.Server;
+import networking.server.Server;
 
 public class Client implements Runnable {
 	private Socket serverConnection;

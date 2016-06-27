@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import game.Communication;
 import game.GameServer;
-import server.ClientConnection;
+import networking.server.ClientConnection;
 
 public class Round {
 	private GameServer server;
