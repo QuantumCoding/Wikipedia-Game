@@ -1,138 +1,206 @@
 package window;
 
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import java.awt.BorderLayout;
-import javax.swing.BoxLayout;
-import javax.swing.GroupLayout;
-import javax.swing.GroupLayout.Alignment;
-import javax.swing.JButton;
-import javax.swing.LayoutStyle.ComponentPlacement;
-import javax.swing.JScrollBar;
+import javax.swing.JPanel;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EtchedBorder;
+import java.awt.Toolkit;
+import java.awt.Color;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import java.awt.Font;
+import javax.swing.SwingConstants;
+import javax.swing.border.TitledBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.JScrollPane;
 import javax.swing.JList;
+import javax.swing.ScrollPaneConstants;
+import java.awt.CardLayout;
+import java.awt.GridLayout;
+import javax.swing.JSeparator;
+import java.awt.Dimension;
+import javax.swing.UIManager;
 
 public class Window extends JFrame{
 	private static final long serialVersionUID = 1L;
 
 	public Window() {
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		getContentPane().setLayout(new BorderLayout(0, 0));
 		
-		JLabel requestTab = new JLabel("Someone wants to pause the game, is that okay?");
+		JPanel panel = new JPanel();
+		getContentPane().add(panel, BorderLayout.WEST);
 		
-		JButton acceptPause = new JButton("That's fine");
+		JPanel panel_6 = new JPanel();
+		panel.add(panel_6);
+		panel_6.setLayout(new BoxLayout(panel_6, BoxLayout.Y_AXIS));
 		
-		JButton dealWithIt = new JButton("Deal with it, we're not stopping this game!");
+		JPanel stats = new JPanel();
+		panel_6.add(stats);
+		stats.setLayout(new BoxLayout(stats, BoxLayout.Y_AXIS));
 		
-		JLabel timer = new JLabel("Time: 0:00");
+		JPanel panel_2 = new JPanel();
+		panel_2.setBorder(new BevelBorder(BevelBorder.RAISED, null, null, null, null));
+		stats.add(panel_2);
+		
+		JLabel lblStats = new JLabel("Stats:");
+		panel_2.add(lblStats);
+		lblStats.setFont(new Font("Verdana", Font.BOLD, 36));
+		
+		JPanel panel_5 = new JPanel();
+		panel_5.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
+		stats.add(panel_5);
+		panel_5.setLayout(new BoxLayout(panel_5, BoxLayout.Y_AXIS));
+		
+		JPanel panel_1 = new JPanel();
+		panel_5.add(panel_1);
+		panel_1.setBorder(null);
+		
+		JLabel lblTime = new JLabel("Time:");
+		lblTime.setHorizontalAlignment(SwingConstants.LEFT);
+		lblTime.setFont(new Font("Tahoma", Font.PLAIN, 26));
+		panel_1.add(lblTime);
+		
+		Component horizontalStrut_1 = Box.createHorizontalStrut(100);
+		panel_1.add(horizontalStrut_1);
+		
+		JLabel label = new JLabel("00:00.000");
+		label.setFont(new Font("Tahoma", Font.PLAIN, 26));
+		panel_1.add(label);
+		
+		JPanel panel_4 = new JPanel();
+		panel_5.add(panel_4);
+		panel_4.setBorder(null);
 		
 		JLabel lblNumberOfClicks = new JLabel("Number of clicks:");
+		lblNumberOfClicks.setFont(new Font("Tahoma", Font.PLAIN, 26));
+		panel_4.add(lblNumberOfClicks);
 		
-		JButton requestPause = new JButton("Request Pause");
+		Component horizontalStrut = Box.createHorizontalStrut(70);
+		panel_4.add(horizontalStrut);
 		
-		JButton quit = new JButton("Quit");
+		JLabel label_1 = new JLabel("0");
+		label_1.setFont(new Font("Tahoma", Font.PLAIN, 26));
+		panel_4.add(label_1);
 		
-		JLabel lblOrderOfWinners = new JLabel("Order of Winners: ");
+		JPanel target = new JPanel();
+		target.setBorder(new CompoundBorder(new EmptyBorder(6, 0, 6, 0), new EtchedBorder(EtchedBorder.LOWERED, null, null)));
+		target.setPreferredSize(new Dimension(1, 168));
+		panel_6.add(target);
+		target.setLayout(new BoxLayout(target, BoxLayout.Y_AXIS));
 		
-		JLabel lblBrowser = new JLabel("Browser");
+		JPanel panel_10 = new JPanel();
+		target.add(panel_10);
+		panel_10.setLayout(new GridLayout(0, 1, 0, 0));
 		
-		JLabel lblLog = new JLabel("Previously explored Sites:");
+		JLabel lblTargets = new JLabel("Target(s): ");
+		lblTargets.setFont(new Font("Tahoma", Font.BOLD, 22));
+		lblTargets.setHorizontalAlignment(SwingConstants.LEFT);
+		panel_10.add(lblTargets);
+		
+		JScrollPane scrollPane_1 = new JScrollPane();
+		scrollPane_1.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		target.add(scrollPane_1);
+		
+		JList list_1 = new JList();
+		list_1.setMinimumSize(new Dimension(23, 23));
+		scrollPane_1.setViewportView(list_1);
+		
+		JPanel players = new JPanel();
+		players.setPreferredSize(new Dimension(175, 270));
+		players.setBorder(new CompoundBorder(new CompoundBorder(new EmptyBorder(1, 1, 1, 1), new EtchedBorder(EtchedBorder.LOWERED, null, null)), new EmptyBorder(3, 3, 3, 3)));
+		panel_6.add(players);
+		players.setLayout(new BorderLayout(0, 0));
+		
+		JPanel panel_8 = new JPanel();
+		players.add(panel_8, BorderLayout.NORTH);
+		panel_8.setLayout(new GridLayout(0, 1, 0, 0));
+		
+		JLabel lblNewLabel = new JLabel("Players: ");
+		lblNewLabel.setFont(new Font("Tahoma", Font.BOLD, 22));
+		panel_8.add(lblNewLabel);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setRequestFocusEnabled(false);
+		scrollPane.setMinimumSize(new Dimension(25, 25));
+		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		players.add(scrollPane);
 		
 		JList list = new JList();
-		list.setToolTipText("");
+		scrollPane.setViewportView(list);
 		
-		JLabel actualNumberOfClicks = new JLabel("0");
+		Component verticalGlue = Box.createVerticalGlue();
+		players.add(verticalGlue, BorderLayout.EAST);
 		
-		JLabel startLocation = new JLabel("Where you must start:");
+		JPanel panel_3 = new JPanel();
+		panel_6.add(panel_3);
+		panel_3.setLayout(new BoxLayout(panel_3, BoxLayout.Y_AXIS));
 		
-		JLabel endLocation = new JLabel("Where you need to get to:");
-		GroupLayout groupLayout = new GroupLayout(getContentPane());
-		groupLayout.setHorizontalGroup(
-			groupLayout.createParallelGroup(Alignment.TRAILING)
-				.addGroup(groupLayout.createSequentialGroup()
-					.addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
-						.addGroup(groupLayout.createSequentialGroup()
-							.addContainerGap()
-							.addComponent(requestPause))
-						.addGroup(groupLayout.createSequentialGroup()
-							.addGap(40)
-							.addComponent(quit))
-						.addGroup(groupLayout.createSequentialGroup()
-							.addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
-								.addGroup(groupLayout.createSequentialGroup()
-									.addGap(125)
-									.addComponent(requestTab))
-								.addGroup(groupLayout.createSequentialGroup()
-									.addContainerGap()
-									.addComponent(timer)
-									.addGap(111)
-									.addComponent(startLocation)))
-							.addPreferredGap(ComponentPlacement.RELATED)
-							.addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
-								.addComponent(endLocation)
-								.addGroup(groupLayout.createSequentialGroup()
-									.addComponent(acceptPause)
-									.addPreferredGap(ComponentPlacement.RELATED)
-									.addComponent(dealWithIt)))))
-					.addContainerGap(78, Short.MAX_VALUE))
-				.addGroup(groupLayout.createSequentialGroup()
-					.addContainerGap()
-					.addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
-						.addComponent(lblOrderOfWinners)
-						.addGroup(groupLayout.createSequentialGroup()
-							.addComponent(lblNumberOfClicks)
-							.addPreferredGap(ComponentPlacement.RELATED)
-							.addComponent(actualNumberOfClicks, GroupLayout.PREFERRED_SIZE, 49, GroupLayout.PREFERRED_SIZE)))
-					.addPreferredGap(ComponentPlacement.RELATED, 501, Short.MAX_VALUE)
-					.addComponent(list, GroupLayout.PREFERRED_SIZE, 1, GroupLayout.PREFERRED_SIZE)
-					.addGap(114))
-				.addGroup(groupLayout.createSequentialGroup()
-					.addContainerGap(679, Short.MAX_VALUE)
-					.addComponent(lblLog)
-					.addGap(39))
-				.addGroup(Alignment.LEADING, groupLayout.createSequentialGroup()
-					.addGap(395)
-					.addComponent(lblBrowser)
-					.addContainerGap(423, Short.MAX_VALUE))
-		);
-		groupLayout.setVerticalGroup(
-			groupLayout.createParallelGroup(Alignment.LEADING)
-				.addGroup(groupLayout.createSequentialGroup()
-					.addGroup(groupLayout.createParallelGroup(Alignment.BASELINE)
-						.addComponent(acceptPause)
-						.addComponent(requestTab)
-						.addComponent(dealWithIt))
-					.addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
-						.addGroup(groupLayout.createSequentialGroup()
-							.addPreferredGap(ComponentPlacement.RELATED)
-							.addComponent(timer)
-							.addPreferredGap(ComponentPlacement.UNRELATED)
-							.addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
-								.addComponent(actualNumberOfClicks)
-								.addComponent(lblNumberOfClicks)))
-						.addGroup(groupLayout.createSequentialGroup()
-							.addGap(18)
-							.addGroup(groupLayout.createParallelGroup(Alignment.BASELINE)
-								.addComponent(startLocation)
-								.addComponent(endLocation))))
-					.addGap(2)
-					.addGroup(groupLayout.createParallelGroup(Alignment.LEADING)
-						.addGroup(groupLayout.createSequentialGroup()
-							.addGap(10)
-							.addComponent(lblOrderOfWinners)
-							.addPreferredGap(ComponentPlacement.RELATED, 293, Short.MAX_VALUE)
-							.addComponent(requestPause)
-							.addPreferredGap(ComponentPlacement.RELATED)
-							.addComponent(quit)
-							.addGap(30))
-						.addGroup(groupLayout.createSequentialGroup()
-							.addGap(18)
-							.addComponent(list, GroupLayout.PREFERRED_SIZE, 1, GroupLayout.PREFERRED_SIZE)
-							.addGap(55)
-							.addComponent(lblLog)
-							.addGap(56)
-							.addComponent(lblBrowser)
-							.addGap(244))))
-		);
-		getContentPane().setLayout(groupLayout);
-	
+		JPanel panel_7 = new JPanel();
+		panel_7.setBorder(new CompoundBorder(new EmptyBorder(2, 0, 2, 0), new BevelBorder(BevelBorder.RAISED, null, null, null, null)));
+		panel_3.add(panel_7);
+		panel_7.setLayout(new BorderLayout(0, 0));
+		
+		JButton btnNewButton = new JButton("PAUSE!");
+		btnNewButton.setFont(new Font("Tahoma", Font.PLAIN, 34));
+		panel_7.add(btnNewButton);
+		
+		JPanel panel_9 = new JPanel();
+		panel_3.add(panel_9);
+		panel_9.setLayout(new GridLayout(1, 1, 0, 0));
+		
+		JPanel panel_11 = new JPanel();
+		panel_11.setBorder(new CompoundBorder(new EmptyBorder(2, 0, 0, 2), new EtchedBorder(EtchedBorder.LOWERED, null, null)));
+		panel_9.add(panel_11);
+		panel_11.setLayout(new BorderLayout(0, 0));
+		
+		JButton btnQuit = new JButton("Quit");
+		panel_11.add(btnQuit);
+		btnQuit.setFont(new Font("Tahoma", Font.PLAIN, 20));
+		
+		JPanel panel_12 = new JPanel();
+		panel_12.setBorder(new CompoundBorder(new EmptyBorder(2, 2, 0, 0), new EtchedBorder(EtchedBorder.LOWERED, null, null)));
+		panel_9.add(panel_12);
+		panel_12.setLayout(new BorderLayout(0, 0));
+		
+		JButton btnNewButton_1 = new JButton("Settings");
+		panel_12.add(btnNewButton_1);
+		btnNewButton_1.setFont(new Font("Tahoma", Font.PLAIN, 20));
+		
+		JPanel panel_13 = new JPanel();
+		panel_13.setBorder(new EtchedBorder(EtchedBorder.RAISED, null, null));
+		getContentPane().add(panel_13, BorderLayout.EAST);
+		panel_13.setLayout(new BorderLayout(0, 0));
+		
+		JPanel panel_15 = new JPanel();
+		panel_15.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
+		panel_13.add(panel_15, BorderLayout.NORTH);
+		panel_15.setLayout(new GridLayout(0, 1, 0, 0));
+		
+		JLabel lblHistory = new JLabel("History:");
+		lblHistory.setVerticalAlignment(SwingConstants.TOP);
+		panel_15.add(lblHistory);
+		lblHistory.setFont(new Font("Tahoma", Font.BOLD, 28));
+		
+		JPanel panel_14 = new JPanel();
+		panel_13.add(panel_14);
+		panel_14.setLayout(new BoxLayout(panel_14, BoxLayout.Y_AXIS));
+		
+		JScrollPane scrollPane_2 = new JScrollPane();
+		scrollPane_2.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		panel_14.add(scrollPane_2);
+		
+		JList list_2 = new JList();
+		scrollPane_2.setViewportView(list_2);
+		
 	}
 }
