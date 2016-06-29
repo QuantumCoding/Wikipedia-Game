@@ -1,4 +1,4 @@
-package game.structure;
+package game.round;
 
 import java.util.ArrayList;
 
@@ -77,9 +77,10 @@ public class Round {
 		
 		for(int i = server.getProprties().getCountDown(); i > 0; i --) {
 			server.sendMessage(Communication.COUNT_DOWN_ROUND + i);
-			try { Thread.sleep(1000); } catch(InterruptedException e) {}
+			try { Thread.sleep(2000); } catch(InterruptedException e) {}
 		}
 		
+		try { Thread.sleep(500); } catch(InterruptedException e) {}
 		server.sendMessage(Communication.START_ROUND);
 	}
 	

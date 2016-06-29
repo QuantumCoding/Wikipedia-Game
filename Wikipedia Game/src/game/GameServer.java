@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import game.structure.Finishing;
-import game.structure.Round;
+import game.round.Finishing;
+import game.round.Round;
 import networking.server.ClientConnection;
 import networking.server.IClientConnectedListener;
 import networking.server.IServerMessageProcesser;

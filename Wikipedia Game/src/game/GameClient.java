@@ -3,6 +3,7 @@ package game;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import game.round.ReadyPanel;
 import game.structure.ILogger;
 import interfaces.IClientInterface;
 import interfaces.IClientView;
@@ -92,7 +93,9 @@ public class GameClient implements IClientMessageProcesser, IClientInterface {
 		}
 		
 		if(message.equals(Communication.START_ROUND)) {
+			ready.countDown(0);
 			nextDestination = startDestination;
+			view.changeTargetDesination(nextDestination);
 			currentDestinationIndex = -1;
 			return;
 		}
@@ -119,7 +122,7 @@ public class GameClient implements IClientMessageProcesser, IClientInterface {
 		view.addSiteToPath(newSite);
 	}
 	
-	private void sendMessage(String message) {
+	public void sendMessage(String message) {
 		try { client.sendMessage(message);
 		} catch(IOException e) { e.printStackTrace(); }   
 	}

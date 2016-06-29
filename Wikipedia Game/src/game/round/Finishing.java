@@ -1,4 +1,4 @@
-package game.structure;
+package game.round;
 
 import game.DataPassing;
 import networking.server.ClientConnection;
