@@ -45,7 +45,7 @@ public class PlayerReadyupPanel extends JPanel {
 		
 		readyLabel = new JLabel();
 		innerPanel.add(readyLabel);
-		ready();
+		notReady();
 		
 		setBackground(new Color(255, 255, 255, 0));
 		usernameLabel.setBackground(new Color(255, 255, 255, 0));
@@ -64,14 +64,18 @@ public class PlayerReadyupPanel extends JPanel {
 	}
 	
 	public void ready() {
+		setVisible(true);
 		readyLabel.setText(READY_STRING);
 		readyLabel.setForeground(READY_COLOR);
 		readyLabel.setFont(READY_FONT);
 	}
 	
 	public void notReady() {
+		setVisible(true);
 		readyLabel.setText(NOT_READY_STRING);
 		readyLabel.setForeground(NOT_READY_COLOR);
 		readyLabel.setFont(NOT_READY_FONT);
 	}
+	
+	public void spectate() { setVisible(false); }
 }

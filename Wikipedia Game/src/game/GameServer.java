@@ -1,6 +1,7 @@
 package game;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -24,7 +25,23 @@ public class GameServer implements IServerMessageProcesser, IClientConnectedList
 	private HashSet<ClientConnection> spectiating;
 	
 	private ArrayList<Finishing> finingOrder;
-
+	
+	public GameServer(InetAddress address, int port, int count) throws IOException {
+		server = new Server(address, port, count);
+		properties = new ServerProperties();
+		
+		playing = new HashSet<>();
+		spectiating = new HashSet<>();
+		finingOrder = new ArrayList<>();
+		
+		currentRound = new Round(this, "NuLl");
+		
+		server.addConnectionListener(this);
+		server.addMessageProcesser(this);
+		
+		server.connect();
+	}
+	
 	public void process(ClientConnection connection, String message) throws IOException {
 		if(message.equals(Communication.REQUEST_PAUSE)) {
 			pauseAcceptedCount = 0;
@@ -51,7 +68,15 @@ public class GameServer implements IServerMessageProcesser, IClientConnectedList
 		
 		if(message.equals(Communication.PLAYER_UNREADY)) {
 			sendMessage(Communication.PLAYER_UNREADY + connection.getUsername());
-			nextRound.playerReadyChange(connection, false);
+			
+			if(spectiating.contains(connection)) {
+				spectiating.remove(connection);
+				playing.add(connection);
+				nextRound.checkReady();
+			} else
+				nextRound.playerReadyChange(connection, false);
+		
+			
 			return;
 		}
 		
@@ -66,6 +91,7 @@ public class GameServer implements IServerMessageProcesser, IClientConnectedList
 			sendMessage(Communication.PLAYER_SPECTATING + connection.getUsername());
 			playing.remove(connection);
 			spectiating.add(connection);
+			nextRound.checkReady();
 			return;
 		}
 		
@@ -82,10 +108,20 @@ public class GameServer implements IServerMessageProcesser, IClientConnectedList
 			finingOrder.add(finishing);
 			return;
 		}
+		
+		System.err.println("Raw Data from \"" + connection.getUsername() + "\": " + message);
 	}
 	
 	public void clientConnected(ClientConnection connection) throws IOException {
+		System.out.println("Player Joined = " + connection.getUsername());
 		sendMessage(Communication.PLAYER_CONNECTED + connection.getUsername());
+		
+		for(ClientConnection conn : server.getConnections()) {
+			if(conn == null || !conn.isRunning() || conn == connection) continue;
+			connection.sendMessage(
+					(spectiating.contains(conn) ? Communication.PLAYER_SPECTATING : Communication.PLAYER_PLAYING)
+					+ conn.getUsername());
+		}
 		
 		if(currentRound.isStarted()) {
 			sendMessage(Communication.PLAYER_SPECTATING + connection.getUsername());
@@ -97,6 +133,7 @@ public class GameServer implements IServerMessageProcesser, IClientConnectedList
 	}
 
 	public void clientDisconnected(ClientConnection connection) throws IOException {
+		System.out.println("Player_Left = " + connection.getUsername());
 		sendMessage(Communication.PLAYER_DISCONNECTED + connection.getUsername());
 		spectiating.remove(connection);
 		playing.remove(connection);
@@ -104,6 +141,7 @@ public class GameServer implements IServerMessageProcesser, IClientConnectedList
 	
 	public void sendMessage(String message) {
 		for(ClientConnection conn : server.getConnections()) {
+			if(conn == null || !conn.isRunning()) continue;
 			try { conn.sendMessage(message);
 			} catch(IOException e) { e.printStackTrace(); }
 		}
@@ -119,14 +157,26 @@ public class GameServer implements IServerMessageProcesser, IClientConnectedList
 		}
 	} 
 	
-	public void roundStart() { this.currentRound = nextRound; nextRound = null; finingOrder.clear(); }
+	public void readyNextRound() { currentRound.readyGame(); }
+	public void startRound() { currentRound.start(); }
+	
+	public void nextRoundStated() { 
+		this.currentRound = nextRound; 
+		nextRound = null; 
+		finingOrder.clear(); 
+	}
 	
 	public void prepNextRound(String startPage) { prepNextRound(new Round(this, startPage)); }
 	public void prepNextRound(Round nextRound) { this.nextRound = nextRound; }
 	
 	public void addNewDestinination(String destination) {
-		nextRound.addDestination(destination);
+		if(nextRound == null) 
+			nextRound = new Round(this, destination); //TODO: Proper nextRound Creation
+		else
+			nextRound.addDestination(destination);
 	}
+	
+	public void stop() throws IOException { server.close(); }
 	
 	public ServerProperties getProprties() { return properties; }
 	public int getConnectionCount() { return server.getConnectedCount(); }

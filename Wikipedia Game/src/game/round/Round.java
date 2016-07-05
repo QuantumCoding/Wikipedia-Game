@@ -37,21 +37,25 @@ public class Round {
 	
 	public void playerReadyChange(ClientConnection connection, boolean ready) {
 		readyCount += ready ? 1 : -1;
-		if(server.getProprties().getNoResponseAutoReadyTime() > 0 && readyCount > 0) {
+		if(server.getProprties().getNoResponseAutoReadyTime() > 0 && readyCount > 0 && forceGoThread == null) {
 			forceGoThread = new Thread(() -> {
 				try { 
+					server.sendMessage(Communication.AUTO_READY_START + server.getProprties().getNoResponseAutoReadyTime());
 					Thread.sleep(server.getProprties().getNoResponseAutoReadyTime());
 					if(readyCount <= 0) return;
-					readyCount = server.getConnectionCount();
+					readyCount = server.getPlayerCount();
 					checkReady();
 				} catch(InterruptedException e) {}
 				
 			}, "Auto-Start Round Thread");
+			
 			forceGoThread.start();
 		
-		} else if(server.getProprties().getNoResponseAutoReadyTime() > 0 && forceGoThread != null) {
+		} else if(server.getProprties().getNoResponseAutoReadyTime() > 0 && readyCount <= 0 && forceGoThread != null) {
 			forceGoThread.interrupt();
 			forceGoThread = null;
+			
+			server.sendMessage(Communication.STOP_READY_START);
 		}
 		
 		if(ready) server.sendMessage(Communication.PLAYER_READY   + connection.getUsername());
@@ -60,19 +64,33 @@ public class Round {
 		checkReady();
 	}
 	
-	private void checkReady() {
-		if(server.getProprties().getReadyPercenatge() <= readyCount / server.getConnectionCount())
+	public void checkReady() {
+		float readyPerc = (float) readyCount / server.getPlayerCount();
+		server.sendMessage(Communication.PLAYERS_READY_NEEDED + 
+				(int) Math.ceil(server.getPlayerCount() *  server.getProprties().getReadyPercenatge()));
+		server.sendMessage(Communication.PLAYERS_READY_RECALC + (int)(readyPerc * 100));
+		
+		if(server.getProprties().getReadyPercenatge() <= readyPerc)
 			start();
 	}
 	
 	public void readyGame() {
-		sendRound();
+		sendRound(); 
 		server.sendMessage(Communication.READY_ROUND);
+		checkReady();
 	}
 	
 	public void start() {
+		if(forceGoThread != null) {
+			readyCount = 0;
+			forceGoThread.interrupt();
+			forceGoThread = null;
+			
+			server.sendMessage(Communication.STOP_READY_START);
+		}
+		
 		isStarted = true;
-		server.roundStart();
+		server.nextRoundStated();
 		playerCount = server.getPlayerCount();
 		
 		for(int i = server.getProprties().getCountDown(); i > 0; i --) {

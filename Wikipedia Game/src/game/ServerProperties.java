@@ -1,16 +1,16 @@
 package game;
 
 public class ServerProperties {
-	private float pausePercentage;
+	private float pausePercentage = 1.00f;
 	
 	public float getPausePercenatge() { return pausePercentage; }
 	public void setPausePercenatge(float percentage) { this.pausePercentage = percentage; }
 	
 //	---------------------------------------------------------------------------------------------------------------------------  \\
 	
-	private float readyPercentage;
-	private long noResponseAutoReady;
-	private int countDownAmount;
+	private float readyPercentage = 1.00f;
+	private long noResponseAutoReady = 30 * 1000;//-1;
+	private int countDownAmount = 3;
 
 	public float getReadyPercenatge() { return readyPercentage; }
 	public void setReadyPercenatge(float percentage) { this.readyPercentage = percentage; }

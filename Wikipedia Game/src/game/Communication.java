@@ -19,17 +19,23 @@ public class Communication {// X == Completed	/ == Not Applicable
 	public static final String START_ROUND = "GO! GO! GO!";					//	     X  -  /    |    /  -  X   
                                                                                                           
 	// Player Round Prep.                                                     	       
-	public static final String PLAYER_READY = "ready";						//	     X  -  X    |       -  X   
-	public static final String PLAYER_UNREADY = "gimmy a sec";				//	     X  -  X    |       -  X   
+	public static final String PLAYER_READY = "ready";						//	     X  -  X    |    X  -  X   
+	public static final String PLAYER_UNREADY = "gimmy a sec";				//	     X  -  X    |    X  -  X    
+	
+	public static final String PLAYERS_READY_RECALC = "perc ready recalc";	//	     X  -  /    |    /  -  X  
+	public static final String PLAYERS_READY_NEEDED = "nr_players need";	//	     X  -  /    |    /  -  X
+	
+	public static final String AUTO_READY_START = "tick tock goes the ";	//	     X  -  /    |    /  -  X
+	public static final String STOP_READY_START = "tock tick stop the ";	//	     X  -  /    |    /  -  X
                                                                                                            
 	// Player State Change                                                    	      
 	public static final String PLAYER_CONNECTED = "new player";				//	     X  -  /    |    /  -  X   
-	public static final String PLAYER_DISCONNECTED = "player left";			//	     X  -  /    |    /  -  X   
+	public static final String PLAYER_DISCONNECTED = "l_player left";		//	     X  -  /    |    /  -  X   
                                                                                                            
-	public static final String PLAYER_SPECTATING = "player spectating";		//	     X  -  X    |       -  X   
-	public static final String PLAYER_PLAYING = "player playing";			//	     X  -  X    |       -  X   
+	public static final String PLAYER_SPECTATING = "s_player spectating";	//	     X  -  X    |       -  X   
+	public static final String PLAYER_PLAYING = "p_player playing";			//	     X  -  X    |       -  X   
                                                                                                            
 	// Player Game Play                                                       	  
-	public static final String PLAYER_DONE = "player done";					//	     X  -  X    |    X  -  X   
+	public static final String PLAYER_DONE = "d_player done";				//	     X  -  X    |    X  -  X   
 	public static final String PLAYER_QUIT = "i just cant";					//	     X  -  X    |    X  -  X  
 }

@@ -42,7 +42,7 @@ public class ClientConnection implements Runnable {
 	public void run() {
 		while(running) {
 			try {
-				while(in.available() == 0 && running) 
+				while(running && in.available() == 0) 
 					try { Thread.sleep(10); }  catch(InterruptedException e) {}
 				if(!running) continue;
 				
@@ -67,6 +67,11 @@ public class ClientConnection implements Runnable {
 	}
 
 	public void sendMessage(String message) throws IOException {
+		if(!running || connection.isClosed()) { 
+			System.err.println("Connection Closed"); 
+			return; 
+		}
+		
 		out.writeUTF(message);
 	}
 

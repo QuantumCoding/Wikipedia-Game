@@ -5,6 +5,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -52,8 +53,15 @@ public class ReadyPanel extends JPanel {
 	private int fade;
 	
 	private GameClient client;
+	private boolean newRoundReadyShow;
+	private int playersNeedToStart;
 	
-	public ReadyPanel() {
+	private Thread autoReadyThread;
+	private boolean autoReadyThreadStop;
+	
+	public ReadyPanel(GameClient client) {
+		this.client = client;
+		
 		int boarderPadding = LAYER_WIDTH * LAYER_COUNT;
 		setBorder(new EmptyBorder(boarderPadding, boarderPadding, boarderPadding, boarderPadding));
 		setBackground(new Color(255, 255, 255, 0));
@@ -88,34 +96,34 @@ public class ReadyPanel extends JPanel {
 		readyupPanel.add(readyButton);
 		readyButton.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		readyButton.addActionListener((e) -> {
-//			client.sendMessage(Communication.PLAYER_READY);
+			client.sendMessage(Communication.PLAYER_READY);
 			((CardLayout) buttonPanel.getLayout()).show(buttonPanel, "cancle");
 			
-			new Thread(() -> {
-				long startVal = 1 * 1000;
-				long val = startVal;
-				while(val > 0) {
-					val -= 1;
-					setTimer(val, startVal);
-					try{Thread.sleep(1);}catch(InterruptedException w) {}
-				}
-				
-				for(int i = 0; i < 5; i ++) {
-					timeLabel.setVisible(false);
-					try{Thread.sleep(100);}catch(InterruptedException w) {}
-					
-					timeLabel.setVisible(true);
-					try{Thread.sleep(100);}catch(InterruptedException w) {}
-				}
-				
-				for(int i = 3; i > 0; i --) {
-					countDown(i);
-					try { Thread.sleep(2000); } catch(InterruptedException w) {}
-				}
-				
-				try { Thread.sleep(500); } catch(InterruptedException w) {}
-				countDown(0);
-			}).start();
+//			new Thread(() -> {
+//				long startVal = 1 * 1000;
+//				long val = startVal;
+//				while(val > 0) {
+//					val -= 1;
+//					setTimer(val, startVal);
+//					try{Thread.sleep(1);}catch(InterruptedException w) {}
+//				}
+//				
+//				for(int i = 0; i < 5; i ++) {
+//					timeLabel.setVisible(false);
+//					try{Thread.sleep(100);}catch(InterruptedException w) {}
+//					
+//					timeLabel.setVisible(true);
+//					try{Thread.sleep(100);}catch(InterruptedException w) {}
+//				}
+//				
+//				for(int i = 3; i > 0; i --) {
+//					countDown(i);
+//					try { Thread.sleep(2000); } catch(InterruptedException w) {}
+//				}
+//				
+//				try { Thread.sleep(500); } catch(InterruptedException w) {}
+//				countDown(0);
+//			}).start();
 		});
 		
 		readyButton.setFocusable(false);
@@ -123,8 +131,7 @@ public class ReadyPanel extends JPanel {
 		
 		spectateButton = new JButton("Spectate");
 		spectateButton.addActionListener((e) -> {
-//			client.sendMessage(Communication.PLAYER_SPECTATING);
-			ReadyPanel.this.addPlayer("Pablo");
+			client.sendMessage(Communication.PLAYER_SPECTATING);
 			((CardLayout) buttonPanel.getLayout()).show(buttonPanel, "cancle");
 		});
 		
@@ -137,7 +144,7 @@ public class ReadyPanel extends JPanel {
 		cancleButton.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		cancleButton.setFocusable(false);
 		cancleButton.addActionListener((e) -> {
-//			client.sendMessage(Communication.PLAYER_UNREADY);
+			client.sendMessage(Communication.PLAYER_UNREADY);
 			((CardLayout) buttonPanel.getLayout()).show(buttonPanel, "readyup");
 		});
 		
@@ -198,6 +205,7 @@ public class ReadyPanel extends JPanel {
 		viewport.setBackground(new Color(255, 255, 255, 0));
 		viewport.setLayout(new BoxLayout(viewport, BoxLayout.Y_AXIS));
 		
+		newRoundReadyShow = true;		
 		goFadeCount = 100;
 		repaint();
 	}
@@ -288,7 +296,8 @@ public class ReadyPanel extends JPanel {
 	
 	public void setVisible(boolean visible) {
 		if(visible == true) {
-			((CardLayout) buttonPanel.getLayout()).show(buttonPanel, "cancle");
+			((CardLayout) buttonPanel.getLayout()).show(buttonPanel, newRoundReadyShow ? "readyup" : "cancle");
+			newRoundReadyShow = false;
 			number = null;
 			goFadeCount = 100;
 		}
@@ -298,8 +307,36 @@ public class ReadyPanel extends JPanel {
 	
 	public void addPlayer(String username) { viewport.add(new PlayerReadyupPanel(username)); viewport.invalidate(); }
 	public void removePlayer(String username) { viewport.remove(getPlayerPanel(username)); viewport.invalidate(); }
-	
+
+	public void playerSpectate(String username) { getPlayerPanel(username).spectate(); }
 	public void playerReady(String username, boolean ready) { getPlayerPanel(username).ready(ready); }
+	
+	public void stopTimer() {
+		if(autoReadyThread == null)
+			return;
+		
+		try {
+			autoReadyThreadStop = true;
+			autoReadyThread.interrupt();
+			autoReadyThread.join();
+			
+			autoReadyThread = null;
+		} catch(InterruptedException e) {}
+	}
+	
+	public void startTimer(long startTime) {
+		autoReadyThread = new Thread(() -> {
+			autoReadyThreadStop = false;
+			long val = startTime;
+			while(val > 0 && !autoReadyThreadStop) {
+				val -= 1;
+				setTimer(val, startTime);
+				try{ Thread.sleep(1); }catch(InterruptedException w) {}
+			}
+		}, "ReadyPanel Auto-Ready Timer");
+		
+		autoReadyThread.start();
+	}
 	
 	public void setTimer(long milliseconds, long startVal) {
 		double percent = (double) milliseconds / (double) startVal;
@@ -309,7 +346,29 @@ public class ReadyPanel extends JPanel {
 		timeLabel.setText(Formater.formatTime(milliseconds));
 	}
 	
-	public void start() {}
+	public void setPercatageReady(int perc) {
+		percentReadyProgress.setValue(perc);
+		String readySection = "Ready: " + Math.round(perc / 100.0f * playersNeedToStart);
+		String needSection = "Needed: " + playersNeedToStart;
+		
+		Graphics g = percentReadyProgress.getGraphics();
+		int width = percentReadyProgress.getWidth();
+		
+		int spaceWidth = (int) g.getFontMetrics().getStringBounds(" ", g).getWidth();
+		int readyWidth = (int) g.getFontMetrics().getStringBounds(readySection, g).getWidth();
+		int needWidth = (int) g.getFontMetrics().getStringBounds(needSection, g).getWidth();
+		int divWidth = (int) g.getFontMetrics().getStringBounds(" || ", g).getWidth();
+		
+		int sumWidth = readyWidth + needWidth + divWidth;
+		int spaceComp = (width - sumWidth) / 4 / spaceWidth;
+		String spacer = ""; for(int i = 0; i < spaceComp; i ++) spacer += " ";
+		
+		percentReadyProgress.setString(spacer + readySection + spacer + " || " + spacer + needSection + spacer);
+	}
+	
+	public void setPlayersNeedToStart(int newCount) { playersNeedToStart = newCount; }
+	
+	public void start() { newRoundReadyShow = true; }
 	
 	private PlayerReadyupPanel getPlayerPanel(String username) {
 		for(Component component : viewport.getComponents()) {
@@ -321,19 +380,37 @@ public class ReadyPanel extends JPanel {
 		return null;
 	}
 	
-	public static void main(String[] args) {
+	public void setSize(Dimension dimetion) {
+		int width = dimetion.width * 3 / 4;
+		int height = dimetion.height * 3 / 4;
+		height = width = Math.min(width, height);
+		
+		super.setLocation((dimetion.width - width) / 2, (dimetion.height - height) / 2);
+		super.setSize(width, height);
+	}
+	
+	public String getName() { return client.getUsername(); }
+	
+	public static void main(String args) {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch(ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
 			e.printStackTrace();
 		}
 		
+		main(null, false);
+	}
+	
+	public static void main(JPanel panel, boolean b) {
+		if(panel == null) 
+			panel = new ReadyPanel(null);
+		
 		JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setTitle("Wrapper Frame");
+		frame.setTitle("Wrapper Frame: " + panel.getName());
 		frame.setSize(500, 500);
 		
-		frame.getContentPane().add(new ReadyPanel());
+		frame.getContentPane().add(panel);
 		
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
