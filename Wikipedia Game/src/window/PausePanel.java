@@ -57,6 +57,8 @@ public class PausePanel extends JPanel implements ComponentListener, ActionListe
 	private JProgressBar progressBar;
 	private JPanel progressBarPanel;
 	
+	private int playersNeedToPause;
+	
 	public PausePanel(IClientInterface client, Rectangle defaultSize) {
 		this.client = client;
 		setBounds(defaultSize);
@@ -119,6 +121,8 @@ public class PausePanel extends JPanel implements ComponentListener, ActionListe
 		declineButton.addActionListener(this);
 		acceptButton.addActionListener(this);
 		resumeGameButton.addActionListener(this);
+
+		topPanel.setVisible(false);
 	}
 	
 	public void paintComponent(Graphics g) {
@@ -139,6 +143,31 @@ public class PausePanel extends JPanel implements ComponentListener, ActionListe
 					(int) ((getHeight() - PAUSE_BOUNDS.getHeight()) / 2 + PAUSE_BOUNDS.getHeight()/2));
 		}
 	}
+
+	public void setPlayersNeedToPause(int newCount) { playersNeedToPause = newCount; }
+	public void setPercatageAgree(int perc) {
+		progressBar.setValue(perc);
+		String readySection = "Willing: " + Math.round(perc / 100.0f * playersNeedToPause);
+		String needSection = "Needed: " + playersNeedToPause;
+		
+		Graphics g = progressBar.getGraphics();
+		int width = progressBar.getWidth();
+		if(g == null) {
+			progressBar.setString(perc + "%");
+			return;
+		}
+		
+		int spaceWidth = (int) g.getFontMetrics().getStringBounds(" ", g).getWidth();
+		int readyWidth = (int) g.getFontMetrics().getStringBounds(readySection, g).getWidth();
+		int needWidth = (int) g.getFontMetrics().getStringBounds(needSection, g).getWidth();
+		int divWidth = (int) g.getFontMetrics().getStringBounds(" || ", g).getWidth();
+		
+		int sumWidth = readyWidth + needWidth + divWidth;
+		int spaceComp = (width - sumWidth) / 4 / spaceWidth;
+		String spacer = ""; for(int i = 0; i < spaceComp; i ++) spacer += " ";
+		
+		progressBar.setString(spacer + readySection + spacer + " || " + spacer + needSection + spacer);
+	}
 	
 	public void requestPause() {
 		label.setText(PAUSE_REQUESTED);
@@ -148,9 +177,11 @@ public class PausePanel extends JPanel implements ComponentListener, ActionListe
 	public void togglePause() { 
 		isPaused = !isPaused;
 		topPanel.setVisible(isPaused);
+		resumeGameButton.setEnabled(true);
 		label.setText(isPaused ? UNPAUSE_REQUEST : PAUSE_REQUESTED);
 		((CardLayout) optionsPanel.getLayout()).show(optionsPanel, isPaused ? "resumePanel" : "requestPanel");
 		setVisible(isPaused);
+		repaint();
 		
 		if(isPaused)
 			addMouseListener(MOUSE_BLOCK);
@@ -173,8 +204,7 @@ public class PausePanel extends JPanel implements ComponentListener, ActionListe
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == acceptButton) {
 			setVisible(false);
-			togglePause();
-//			client.acceptPause();
+			client.acceptPause();
 			return;
 		}
 		
@@ -185,9 +215,9 @@ public class PausePanel extends JPanel implements ComponentListener, ActionListe
 		}
 		
 		if(e.getSource() == resumeGameButton) {
-			setVisible(false);
-			togglePause();
-//			client
+			resumeGameButton.setEnabled(false);
+			client.requestUnpause();
+			return;
 		}
 	}
 }

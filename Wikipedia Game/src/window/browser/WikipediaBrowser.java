@@ -132,11 +132,10 @@ public class WikipediaBrowser extends JPanel implements IWebBrowser {
     }
 
 	public void setSite(String site) {
-		String url = searchBar.getText();
 		Platform.runLater(() -> {
-			String tmp = toURL(url);
+			String tmp = toURL(site);
             if(tmp == null)
-                tmp = toURL("wikipedia://" + url);
+                tmp = toURL("wikipedia://" + site);
             engine.load(tmp);
 		});
 	}

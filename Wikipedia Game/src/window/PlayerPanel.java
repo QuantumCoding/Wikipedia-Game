@@ -20,8 +20,13 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
-public class PlayerPanel extends JPanel {
+public class PlayerPanel extends JPanel implements Comparable<PlayerPanel> {
 	private static final long serialVersionUID = 1L;
+	
+	public static final int PLAYING    = 0;
+	public static final int DONE 	   = 1;
+	public static final int SPECTATING = 2;
+	public static final int QUIT 	   = 3;
 	
 	private static final Color DONE_COLOR = new Color(0, 225, 0);
 	private static final Color PLAYING_COLOR = new Color(255, 225, 0);
@@ -39,8 +44,11 @@ public class PlayerPanel extends JPanel {
 	private JLabel winCountLabel;
 	private JProgressBar progressBar;
 	private JLabel statusLabel;
+	
+	private int rank;
 
 	public PlayerPanel(String username) {
+		setMaximumSize(new Dimension(32767, 90));
 		super.setName(username);
 		setLayout(new BorderLayout(0, 0));
 		
@@ -80,7 +88,7 @@ public class PlayerPanel extends JPanel {
 		timeTextField = new JLabel();
 		timeTextField.setHorizontalAlignment(SwingConstants.TRAILING);
 		timeTextField.setText("00:00.000");
-		timeTextField.setFont(new Font("Tahoma", Font.BOLD, 16));
+		timeTextField.setFont(new Font("Tahoma", Font.BOLD, 12));
 		timePanel.add(timeTextField);
 		
 		JPanel clicksPanel = new JPanel();
@@ -97,7 +105,7 @@ public class PlayerPanel extends JPanel {
 		clicksTextField = new JLabel();
 		clicksTextField.setHorizontalAlignment(SwingConstants.TRAILING);
 		clicksTextField.setText("0");
-		clicksTextField.setFont(new Font("Tahoma", Font.BOLD, 16));
+		clicksTextField.setFont(new Font("Tahoma", Font.BOLD, 12));
 		clicksPanel.add(clicksTextField);
 		
 		JPanel buttonPanel = new JPanel();
@@ -136,7 +144,7 @@ public class PlayerPanel extends JPanel {
 		labelSubPanel.setBorder(new EmptyBorder(3, 3, 3, 3));
 		labelSubPanel.setLayout(new BoxLayout(labelSubPanel, BoxLayout.X_AXIS));
 		
-		JLabel lblPlayerName = new JLabel("PLayer Name");
+		JLabel lblPlayerName = new JLabel(username);
 		lblPlayerName.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		labelSubPanel.add(lblPlayerName);
 		
@@ -149,6 +157,9 @@ public class PlayerPanel extends JPanel {
 		
 		JSeparator separator = new JSeparator();
 		labelPanel.add(separator, BorderLayout.SOUTH);
+		
+		spectateButton.setEnabled(false);
+		rank = Integer.MAX_VALUE;
 	}
 	
 	public void set(String time, int clickCount) {
@@ -158,18 +169,17 @@ public class PlayerPanel extends JPanel {
 	
 	public void win() { this.winCountLabel.setText((Integer.parseInt(winCountLabel.getText()) + 1) + ""); }
 	public void setPercenatgeDone(int perc) { this.progressBar.setValue(perc); }
+	public void setSpectable(boolean canSpectate) { spectateButton.setEnabled(canSpectate); }
+	public void changeRank(int rank) { this.rank = rank; }
 	
 	public void reset() {
 		timeTextField.setText("00:00.000");
 		clicksTextField.setText("0");
 		progressBar.setValue(0);
 		spectateButton.setEnabled(false);
+		rank = Integer.MAX_VALUE;
 	}
 	
-	// 0 = Playing
-	// 1 = Done
-	// 2 = Spectating
-	// 3 = Quit
 	public void setState(int state) {
 		if(state == 0 || state == 1) {
 			timeTextField.setEnabled(true);
@@ -184,25 +194,29 @@ public class PlayerPanel extends JPanel {
 		}
 		
 		switch(state) {
-			case 0: 
+			case PLAYING: 
 				statusLabel.setForeground(PLAYING_COLOR);
 				statusLabel.setText(PLAYING_STRING);
 			break;
 			
-			case 1: 
+			case DONE: 
 				statusLabel.setForeground(DONE_COLOR);
 				statusLabel.setText(DONE_STRING);
 			break;
 			
-			case 2: 
+			case SPECTATING: 
 				statusLabel.setForeground(SPECTATING_COLOR);
 				statusLabel.setText(SPECTATING_STRING);
 			break;
 			
-			case 3: 
+			case QUIT: 
 				statusLabel.setForeground(QUIT_COLOR);
 				statusLabel.setText(QUIT_STRING);
 			break;
 		}
+	}
+
+	public int compareTo(PlayerPanel other) {
+		return Integer.compare(rank, other.rank);
 	}
 }

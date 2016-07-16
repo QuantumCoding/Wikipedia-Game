@@ -1,42 +1,34 @@
 package game.round;
 
-import java.util.ArrayList;
-
 import game.Communication;
 import game.GameServer;
 import networking.server.ClientConnection;
 
 public class Round {
 	private GameServer server;
-	
-	private String startingPoint;
-	private ArrayList<String> destinations;
+
+	private RoundModel model;
 	private boolean isStarted;
 	private int playerCount;
 	
 	private int readyCount;
 	private Thread forceGoThread;
 	
+	public Round(GameServer server, RoundModel model) {
+		this.server = server;
+		this.model = model;
+	}
+	
 	public Round(GameServer server, String startingPoint) {
 		this.server = server;
-		this.startingPoint = startingPoint;
-		this.destinations = new ArrayList<>();
+		this.model = new RoundModel();
+		this.model.addDestination(startingPoint);
 	}
 	
-	public void addDestination(String destination) {
-		destinations.add(destination);
-	}
-	
-	public void sendRound() {
-		server.sendMessage(Communication.NEW_ROUND);
-		server.sendMessage(Communication.SET_START + startingPoint);
-		
-		for(String destination : destinations)
-			server.sendMessage(Communication.ADD_DESTINATION + destination);
-	}
+	public void addDestination(String destination) { model.addDestination(destination); }
 	
 	public void playerReadyChange(ClientConnection connection, boolean ready) {
-		readyCount += ready ? 1 : -1;
+		readyCount += ready ? 1 : -1; if(readyCount < 0) readyCount = 0;
 		if(server.getProprties().getNoResponseAutoReadyTime() > 0 && readyCount > 0 && forceGoThread == null) {
 			forceGoThread = new Thread(() -> {
 				try { 
@@ -75,9 +67,20 @@ public class Round {
 	}
 	
 	public void readyGame() {
+		if(!model.isValid())
+			throw new IllegalStateException("Round Model is not Valid! Make Sure Round has enough Desinations");
+		
 		sendRound(); 
-		server.sendMessage(Communication.READY_ROUND);
+		server.sendMessage(Communication.ROUND_READY);
 		checkReady();
+	}
+	
+	private void sendRound() {
+		server.sendMessage(Communication.NEW_ROUND);
+		server.sendMessage(Communication.SET_START + model.getStartingLocation());
+		
+		for(String destination : model.getLocations())
+			server.sendMessage(Communication.ADD_DESTINATION + destination);
 	}
 	
 	public void start() {
@@ -102,6 +105,7 @@ public class Round {
 		server.sendMessage(Communication.START_ROUND);
 	}
 	
+	public RoundModel getModel() { return model; }
 	public boolean isStarted() { return isStarted; }
 	public int getPlayerCount() { return playerCount; }
 }

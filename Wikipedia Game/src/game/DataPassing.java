@@ -7,13 +7,15 @@ public class DataPassing {
 	
 	public static final String[] splitData(String raw) {
 		ArrayList<String> parts = new ArrayList<>();
-		int index = raw.indexOf(DATA_SPLIT);
+		
+		int index = raw.indexOf(DATA_SPLIT), lastIndex = 0;
 		while(index != -1) {
-			parts.add(raw.substring(0, index));
-			raw = raw.substring(index + DATA_SPLIT.length());
+			parts.add(raw.substring(lastIndex, index));
+			lastIndex = index += DATA_SPLIT.length();
+			index = raw.indexOf(DATA_SPLIT, index);
 		}
 		
-		parts.add(raw);
+		parts.add(raw.substring(lastIndex));
 		return parts.toArray(new String[parts.size()]);
 	}
 }

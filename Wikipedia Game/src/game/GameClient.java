@@ -1,21 +1,32 @@
 package game;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
-import javax.swing.JPanel;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import game.round.ReadyPanel;
 import game.structure.ILogger;
 import game.structure.LogType;
 import interfaces.IClientInterface;
 import interfaces.IClientView;
+import interfaces.IClientViewFactory;
+import interfaces.ISiteChangeListener;
 import interfaces.IWebBrowser;
 import networking.client.Client;
 import networking.client.IClientMessageProcesser;
+import networking.server.Server;
+import window.browser.WikipediaURLStreamHandlerFactory;
+import window.testing.SamShowFrameFactory;
 
-public class GameClient implements IClientMessageProcesser, IClientInterface {
+public class GameClient implements IClientMessageProcesser, IClientInterface, ISiteChangeListener {
 	private Client client;
 	private IClientView view;
 	private ReadyPanel ready;
@@ -28,8 +39,13 @@ public class GameClient implements IClientMessageProcesser, IClientInterface {
 	
 	private String username;
 	
-	public GameClient(String username, InetAddress address) throws IOException {
-		client = new Client(address, username);
+	private Thread timerThread;
+	private long roundTimer;
+	private int  clickCount;
+	private boolean roundDone;
+	
+	public GameClient(String username, InetAddress address, int port, IClientViewFactory viewFactory) throws IOException {
+		client = new Client(address, port, username);
 		this.username = username;
 		
 		destinations = new ArrayList<>();
@@ -40,45 +56,33 @@ public class GameClient implements IClientMessageProcesser, IClientInterface {
 			
 			public void clear() {}
 		};
-		
-		view = new IClientView() {
-			public void togglePause() { System.out.println("Toggle Pause"); }
-			public void startNewRound()  { System.out.println("Start New Round"); }
-			public void setStartPage(String page) { System.out.println("StartPage = " + page); }
-			public void setClicks(int clickCount)  { System.out.println("Clicks = " + clickCount); }
-			public void prepNewRound() { System.out.println("prepNewRound"); }
-			public void playerWin(String playerName) { System.out.println("playerWin = " + playerName); }
-			public void playerStatsChanged(String playerName, long time, int clickCount) { System.out.println("playerStateChange = " + playerName + ", " + time + ", " + clickCount); }
-			public void playerSpectating(String playerName)  { System.out.println("playerSpectating = " + playerName); }
-			public void playerQuit(String playerName) { System.out.println("playerQuit = " + playerName); }
-			public void playerProgress(String playerName, int percentage) { System.out.println("playerProgress = " + playerName + ", " + percentage); }
-			public void playerPlaying(String playerName) { System.out.println("playerPlaying = " + playerName); }
-			public void playerLeft(String playerName) { System.out.println("playerLeft = " + playerName); }
-			public void playerJoined(String playerName) { System.out.println("playerJoined = " + playerName); }
-			public void playerDone(String playerName) { System.out.println("playerDone = " + playerName); }
-			public void pauseRequested() { System.out.println("pauseRequested"); }
-			public IWebBrowser getBrowser() { System.out.println("getBrowser"); return null; }
-			public void changeTime(long milliSeconds) { System.out.println("changeTime = " + milliSeconds); }
-			public void changeTargetDesination(String desination) { System.out.println("changeTargetDesination = " + desination); }
-			public void addToHistory(String page) { System.out.println("addToHistory = " + page); }
-			@SuppressWarnings("static-access")
-			public void addReadyPanel(JPanel readyPanel) { System.out.println("addReadyPanel = " + readyPanel); ((ReadyPanel) readyPanel).main(readyPanel, false); }
-			public void addDesitination(String page) { System.out.println("addDesitination = " + page); }
-		};
-		
+
+		view = viewFactory.createView(this);
 		ready = new ReadyPanel(this);
 		view.addReadyPanel(ready);
+		ready.setVisible(false);
 		
-		client.addMessageProcesser(this);
-		client.connect();
+		try {
+			client.addMessageProcesser(this);
+			client.connect();
+		} catch(IOException e) {
+			view.close();
+			throw e;
+		}
+		
+		
+		view.getBrowser().addSiteChangeListener(this);
 	}
 	
 	public void process(Client connection, String message) throws IOException {
-		System.out.println("Message: " + message);
+		System.out.println(username + " Message: " + message);
 		if(connection != client) throw new IllegalArgumentException("Invalid Client");
 		
 		if(message.equals(Communication.REQUEST_PAUSE)) { view.pauseRequested(); return; }
-		if(message.equals(Communication.TOOGLE_PAUSE)) { view.togglePause(); return; }
+		if(message.equals(Communication.TOGGLE_PAUSE)) { view.togglePause(); return; }
+		
+		if(message.startsWith(Communication.PAUSE_ACCEPTANCE_HAVE)) { view.setPercatageAgree(Integer.parseInt(message.substring(Communication.PAUSE_ACCEPTANCE_HAVE.length()))); return; }
+		if(message.startsWith(Communication.PAUSE_ACCEPTANCE_NEED)) { view.setPlayersNeedToPause(Integer.parseInt(message.substring(Communication.PAUSE_ACCEPTANCE_NEED.length()))); return; }
 		
 		if(message.startsWith(Communication.SET_START)) {
 			view.setStartPage(startDestination = message.substring(Communication.SET_START.length()));
@@ -93,18 +97,18 @@ public class GameClient implements IClientMessageProcesser, IClientInterface {
 		}
 
 		if(message.startsWith(Communication.PLAYER_PLAYING)) {
+			view.playerPlaying(message.substring(Communication.PLAYER_PLAYING.length()));
 			ready.addPlayer(message.substring(Communication.PLAYER_PLAYING.length()));
 			log.log(message.substring(Communication.PLAYER_PLAYING.length()) + " is now Playing", ClientLogType.PlayerState);
 			return;
 		}
 		
 		if(message.startsWith(Communication.PLAYER_SPECTATING)) {
+			view.playerSpectating(message.substring(Communication.PLAYER_SPECTATING.length()));
 			ready.playerSpectate(message.substring(Communication.PLAYER_SPECTATING.length()));
 			log.log(message.substring(Communication.PLAYER_SPECTATING.length()) + " is now Spectating", ClientLogType.PlayerState);
 			return;
 		}
-
-		if(message.equals(Communication.NEW_ROUND)) { view.prepNewRound(); return; }
 		
 		if(message.startsWith(Communication.PLAYER_READY)) { ready.playerReady(message.substring(Communication.PLAYER_READY.length()), true); return; }
 		if(message.startsWith(Communication.PLAYER_UNREADY)) { ready.playerReady(message.substring(Communication.PLAYER_UNREADY.length()), false); return; }
@@ -135,47 +139,117 @@ public class GameClient implements IClientMessageProcesser, IClientInterface {
 			long time = Long.parseLong(parts[1]);
 			String username = parts[0];
 			
+			view.playerDone(username);
 			view.playerStatsChanged(username, time, clickCount);
 			return;
 		}
 		
-		if(message.startsWith(Communication.PLAYER_QUIT)) { 
-			view.playerQuit(message.substring(Communication.PLAYER_QUIT.length()));
+		if(message.startsWith(Communication.PLAYER_RANK)) {
+			String[] parts = DataPassing.splitData(message.substring(Communication.PLAYER_RANK.length()));
+			int rank = Integer.parseInt(parts[1]);
+			String username = parts[0];
+			
+			view.updatePlayerRank(username, rank);
 			return;
 		}
 		
-		if(message.equals(Communication.READY_ROUND)) { ready.setVisible(true); return; }
+		if(message.startsWith(Communication.PLAYER_WON)) {
+			roundDone = true;
+			view.playerWin(message.substring(Communication.PLAYER_WON.length()));
+			
+			try {
+				if(timerThread == null) return;
+				sendMessage(Communication.PLAYER_DONE
+						+ DataPassing.DATA_SPLIT + roundTimer
+						+ DataPassing.DATA_SPLIT + 999);
+				
+				timerThread.interrupt();
+				timerThread.join();
+				timerThread = null;
+			} catch(InterruptedException e) {}
+			
+			return;
+		}
+		
+		if(message.startsWith(Communication.PLAYER_QUIT)) { 
+			String[] parts = DataPassing.splitData(message.substring(Communication.PLAYER_QUIT.length()));
+			int clickCount = Integer.parseInt(parts[2]);
+			long time = Long.parseLong(parts[1]);
+			String username = parts[0];
+			
+			view.playerQuit(username);
+			view.playerStatsChanged(username, time, clickCount);
+			return;
+		}
+		
+		if(message.equals(Communication.ROUND_READY)) { ready.setVisible(true); return; }
 		
 		if(message.startsWith(Communication.COUNT_DOWN_ROUND)) {
 			ready.countDown(Integer.parseInt(message.substring(Communication.COUNT_DOWN_ROUND.length())));
 			return;
 		}
 		
+		if(message.equals(Communication.NEW_ROUND)) { destinations.clear(); view.prepNewRound(); return; }
+		
 		if(message.equals(Communication.START_ROUND)) {
 			ready.countDown(0);
 			nextDestination = startDestination;
-			view.changeTargetDesination(nextDestination);
+			view.setStartPage(nextDestination);
+			view.startNewRound();
 			currentDestinationIndex = -1;
+			
+			roundDone = false;
+			clickCount = 0;
+			timerThread = new Thread(() -> {
+				long lapStart = System.currentTimeMillis();
+				while(!roundDone) {
+					try { Thread.sleep(5); } catch(InterruptedException e) {}
+					roundTimer += System.currentTimeMillis() - lapStart;
+					lapStart = System.currentTimeMillis();
+					
+					view.changeTime(roundTimer);
+				}
+				
+			}, username + " - Round Timer - Tread");
+			timerThread.start();
+			
 			return;
 		}
+		
+		if(message.startsWith(Communication.ALLOW_JUMP_BACK)) { view.allowJumpBack(Boolean.parseBoolean(message.substring(Communication.ALLOW_JUMP_BACK.length()))); return; }
 		
 		System.err.println("Raw Data from Server: " + message);
 	}
 
-	public void requestPause() { sendMessage(Communication.REQUEST_PAUSE);  }
-	public void acceptPause()  { sendMessage(Communication.PAUSE_ACCEPT);   }
-	public void rejectPause()  { sendMessage(Communication.PAUSE_REJECTED); }
+	public void requestPause()   { sendMessage(Communication.REQUEST_PAUSE);  }
+	public void acceptPause()    { sendMessage(Communication.PAUSE_ACCEPT);   }
+	public void rejectPause()    { sendMessage(Communication.PAUSE_REJECTED); }
+	public void requestUnpause() { sendMessage(Communication.UNPAUSE); 		  }
 
-	public void quit() { try { client.sendMessage(Communication.PLAYER_QUIT); } catch(IOException e) { e.printStackTrace(); } }
+	public void quit() { sendMessage(Communication.PLAYER_QUIT); view.nowDone(); }
 	public void disconnect() { try { client.disconnect(); } catch(IOException e) { e.printStackTrace(); } }
 	
 	public String getUsername() { return username; }
 	
 	public void siteChanged(String newSite, String oldSite) {
+		clickCount ++;
+		view.setClicks(clickCount);
+		
 		if(newSite.equals(nextDestination)) {
 			if(++ currentDestinationIndex >= destinations.size()) {
-				try { client.sendMessage(Communication.PLAYER_DONE);
-				} catch(IOException e) { e.printStackTrace(); }
+				try { 
+					roundDone = true;
+					
+					view.nowDone();
+					sendMessage(Communication.PLAYER_DONE
+						+ DataPassing.DATA_SPLIT + roundTimer
+						+ DataPassing.DATA_SPLIT + clickCount
+					);
+					
+					timerThread.interrupt();
+					timerThread.join();
+					timerThread = null;
+				} catch(InterruptedException e) { e.printStackTrace(); }
 			} else {
 				nextDestination = destinations.get(currentDestinationIndex);
 				view.changeTargetDesination(nextDestination);
@@ -188,5 +262,33 @@ public class GameClient implements IClientMessageProcesser, IClientInterface {
 	public void sendMessage(String message) {
 		try { client.sendMessage(message);
 		} catch(IOException e) { e.printStackTrace(); }   
+	}
+
+	public void siteChanges(IWebBrowser browser, String oldSite, String newSite) {
+		siteChanged(processURLString(newSite), processURLString(oldSite));
+	}
+	
+	private String processURLString(String url) {
+		if(url == null) return "";
+		
+		try { url = URLDecoder.decode(url, "UTF-8"); } catch(UnsupportedEncodingException e) {}
+		String string = url.substring(url.lastIndexOf("/") + 1);
+		if(string.isEmpty()) return "";
+		
+		string = Character.toUpperCase(string.charAt(0)) + string.substring(1);
+		return string.toString().replace("_", " ");
+	}
+	
+	public IClientView getView() { return view; } 
+	
+	public static void main(String[] args) throws UnknownHostException, IOException {
+		URL.setURLStreamHandlerFactory(new WikipediaURLStreamHandlerFactory());
+		
+		try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } 
+		catch(ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
+			e.printStackTrace();
+		}
+		
+		new GameClient("Client #", Inet4Address.getLocalHost(), Server.DEFAULT_PORT, new SamShowFrameFactory());
 	}
 }

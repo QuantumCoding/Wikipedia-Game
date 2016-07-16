@@ -26,7 +26,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 
-import Util.Formater;
+import Util.Formatter;
 import game.Communication;
 import game.GameClient;
 
@@ -53,7 +53,6 @@ public class ReadyPanel extends JPanel {
 	private int fade;
 	
 	private GameClient client;
-	private boolean newRoundReadyShow;
 	private int playersNeedToStart;
 	
 	private Thread autoReadyThread;
@@ -96,6 +95,7 @@ public class ReadyPanel extends JPanel {
 		readyupPanel.add(readyButton);
 		readyButton.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		readyButton.addActionListener((e) -> {
+			client.getView().nowPlaying();
 			client.sendMessage(Communication.PLAYER_READY);
 			((CardLayout) buttonPanel.getLayout()).show(buttonPanel, "cancle");
 			
@@ -131,6 +131,7 @@ public class ReadyPanel extends JPanel {
 		
 		spectateButton = new JButton("Spectate");
 		spectateButton.addActionListener((e) -> {
+			client.getView().nowSpectating();
 			client.sendMessage(Communication.PLAYER_SPECTATING);
 			((CardLayout) buttonPanel.getLayout()).show(buttonPanel, "cancle");
 		});
@@ -205,7 +206,6 @@ public class ReadyPanel extends JPanel {
 		viewport.setBackground(new Color(255, 255, 255, 0));
 		viewport.setLayout(new BoxLayout(viewport, BoxLayout.Y_AXIS));
 		
-		newRoundReadyShow = true;		
 		goFadeCount = 100;
 		repaint();
 	}
@@ -296,8 +296,12 @@ public class ReadyPanel extends JPanel {
 	
 	public void setVisible(boolean visible) {
 		if(visible == true) {
-			((CardLayout) buttonPanel.getLayout()).show(buttonPanel, newRoundReadyShow ? "readyup" : "cancle");
-			newRoundReadyShow = false;
+//			((CardLayout) buttonPanel.getLayout()).show(buttonPanel, newRoundReadyShow ? "readyup" : "cancle");
+			
+			mainPanel.setVisible(true);
+			client.sendMessage(Communication.PLAYER_UNREADY);
+			((CardLayout) buttonPanel.getLayout()).show(buttonPanel, "readyup");
+			
 			number = null;
 			goFadeCount = 100;
 		}
@@ -305,8 +309,17 @@ public class ReadyPanel extends JPanel {
 		super.setVisible(visible);
 	}
 	
-	public void addPlayer(String username) { viewport.add(new PlayerReadyupPanel(username)); viewport.invalidate(); }
-	public void removePlayer(String username) { viewport.remove(getPlayerPanel(username)); viewport.invalidate(); }
+	public void addPlayer(String username) { 
+		if(getPlayerPanel(username) != null)
+			return;
+		viewport.add(new PlayerReadyupPanel(username)); 
+		viewport.invalidate(); 
+	}
+	
+	public void removePlayer(String username) { 
+		viewport.remove(getPlayerPanel(username)); 
+		viewport.invalidate(); 
+	}
 
 	public void playerSpectate(String username) { getPlayerPanel(username).spectate(); }
 	public void playerReady(String username, boolean ready) { getPlayerPanel(username).ready(ready); }
@@ -343,7 +356,7 @@ public class ReadyPanel extends JPanel {
 		double red   = Math.max(Math.min(Math.pow((-percent * PHASE_DURATION + PHASE_DURATION), 3) / 3, 1), 0);
 		double green = Math.max(Math.min(Math.pow(( percent * PHASE_DURATION), 3) / 3, 1), 0);
 		timeLabel.setForeground(new Color((float) red, (float) green, 0));
-		timeLabel.setText(Formater.formatTime(milliseconds));
+		timeLabel.setText(Formatter.formatTime(milliseconds));
 	}
 	
 	public void setPercatageReady(int perc) {
@@ -353,6 +366,10 @@ public class ReadyPanel extends JPanel {
 		
 		Graphics g = percentReadyProgress.getGraphics();
 		int width = percentReadyProgress.getWidth();
+		if(g == null) {
+			percentReadyProgress.setString(perc + "%");
+			return;
+		}
 		
 		int spaceWidth = (int) g.getFontMetrics().getStringBounds(" ", g).getWidth();
 		int readyWidth = (int) g.getFontMetrics().getStringBounds(readySection, g).getWidth();
@@ -368,9 +385,10 @@ public class ReadyPanel extends JPanel {
 	
 	public void setPlayersNeedToStart(int newCount) { playersNeedToStart = newCount; }
 	
-	public void start() { newRoundReadyShow = true; }
+	public void start() { timeLabel.setText("00:00.000"); timeLabel.setForeground(Color.BLACK); }
 	
 	private PlayerReadyupPanel getPlayerPanel(String username) {
+		username = username.trim();
 		for(Component component : viewport.getComponents()) {
 			if(!(component instanceof PlayerReadyupPanel)) continue;
 			if(!component.getName().equals(username)) continue;
@@ -381,8 +399,8 @@ public class ReadyPanel extends JPanel {
 	}
 	
 	public void setSize(Dimension dimetion) {
-		int width = dimetion.width * 3 / 4;
-		int height = dimetion.height * 3 / 4;
+		int width = dimetion.width * 7 / 8;
+		int height = dimetion.height * 7 / 8;
 		height = width = Math.min(width, height);
 		
 		super.setLocation((dimetion.width - width) / 2, (dimetion.height - height) / 2);

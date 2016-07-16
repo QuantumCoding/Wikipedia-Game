@@ -6,7 +6,11 @@ public class Communication {// X == Completed	/ == Not Applicable
 	public static final String REQUEST_PAUSE = "pause please";				//	     X  -  X    |    X  -  X    
 	public static final String PAUSE_REJECTED = "no pause";					//	     /  -  X    |    X  -  /   
 	public static final String PAUSE_ACCEPT = "yes pause";					//	     /  -  X    |    X  -  /   
-	public static final String TOOGLE_PAUSE = "toggle pause";				//	     X  -  /    |    /  -  X  
+	public static final String TOGGLE_PAUSE = "toggle pause";				//	     X  -  /    |    /  -  X  
+	public static final String UNPAUSE = "unpause";							//	     /  -  X    |    X  -  /  
+	
+	public static final String PAUSE_ACCEPTANCE_HAVE = "pause have";		//	     X  -  /    |    /  -  X  
+	public static final String PAUSE_ACCEPTANCE_NEED = "pause need";		//	     X  -  /    |    /  -  X  
                                                                                                            
 	// Round Flow                                                             	          
 	public static final String SET_START = "set start";						//	     X  -  /    |    /  -  X   
@@ -14,7 +18,7 @@ public class Communication {// X == Completed	/ == Not Applicable
 	public static final String NEW_ROUND = "prep new round";				//	     X  -  /    |    /  -  X   
                                                                                                            
 	// Round State                                                            	          
-	public static final String READY_ROUND = "on your mark";				//	     X  -  /    |    /  -  X  
+	public static final String ROUND_READY = "on your mark";				//	     X  -  /    |    /  -  X  
 	public static final String COUNT_DOWN_ROUND = "get set";				//	     X  -  /    |    /  -  X  
 	public static final String START_ROUND = "GO! GO! GO!";					//	     X  -  /    |    /  -  X   
                                                                                                           
@@ -38,4 +42,10 @@ public class Communication {// X == Completed	/ == Not Applicable
 	// Player Game Play                                                       	  
 	public static final String PLAYER_DONE = "d_player done";				//	     X  -  X    |    X  -  X   
 	public static final String PLAYER_QUIT = "i just cant";					//	     X  -  X    |    X  -  X  
+	
+	public static final String PLAYER_RANK = "new place in life";			//	     X  -  /    |    /  -  X 
+	public static final String PLAYER_WON = "winner winner";			//	     X  -  /    |    /  -  X 
+    
+	// Server Property Change                                                     	  
+	public static final String ALLOW_JUMP_BACK = "do the jumpen";			//	     X  -  /    |    /  -  X   
 }
