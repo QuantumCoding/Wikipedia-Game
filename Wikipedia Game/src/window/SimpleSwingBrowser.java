@@ -16,6 +16,8 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -154,6 +156,13 @@ public class SimpleSwingBrowser extends JPanel {
     }
     
     public static void main(String[] args) {
+    	try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+				| UnsupportedLookAndFeelException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     	JFrame frame = new JFrame();
     	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     	frame.setTitle("Web Browser - Wrapper");
