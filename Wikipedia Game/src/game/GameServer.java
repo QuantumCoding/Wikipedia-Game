@@ -133,7 +133,7 @@ public class GameServer implements IServerMessageProcesser, IClientConnectedList
 		finingOrder.add(finishing);
 		finingOrder.sort(null);
 		
-		if(done.size() >= currentRound.getPlayerCount() - (properties.lettingAllPlayersFinish() ? 0 : 1) && !roundOver) {
+		if(done.size() >= currentRound.getPlayerCount() - (properties.letAllPlayersFinish() ? 0 : 1) && !roundOver) {
 			if(done.isEmpty()) return; roundOver = true;
 			sendMessage(Communication.PLAYER_WON + finingOrder.get(0).getConnection().getUsername());
 			
@@ -152,10 +152,10 @@ public class GameServer implements IServerMessageProcesser, IClientConnectedList
 	private void checkUnpause() {
 		float readyPerc = (float) pauseAcceptedCount / playing.size();
 		sendMessageToPlayers(Communication.PAUSE_ACCEPTANCE_NEED + 
-				(int) Math.ceil(playing.size() *  properties.getUnpausePercenatge()));
+				(int) Math.ceil(playing.size() *  properties.getUnpausePercentage()));
 		sendMessageToPlayers(Communication.PAUSE_ACCEPTANCE_HAVE + (int)(readyPerc * 100));
 		
-		if(properties.getUnpausePercenatge() <= readyPerc) {
+		if(properties.getUnpausePercentage() <= readyPerc) {
 			sendMessageToPlayers(Communication.TOGGLE_PAUSE);
 			pauseAcceptedCount = 0;
 		}
@@ -164,10 +164,10 @@ public class GameServer implements IServerMessageProcesser, IClientConnectedList
 	private void checkPause() {
 		float readyPerc = (float) pauseAcceptedCount / playing.size();
 		sendMessageToPlayers(Communication.PAUSE_ACCEPTANCE_NEED + 
-				(int) Math.ceil(playing.size() *  properties.getPausePercenatge()));
+				(int) Math.ceil(playing.size() *  properties.getPausePercentage()));
 		sendMessageToPlayers(Communication.PAUSE_ACCEPTANCE_HAVE + (int)(readyPerc * 100));
 		
-		if(properties.getPausePercenatge() <= readyPerc) {
+		if(properties.getPausePercentage() <= readyPerc) {
 			sendMessageToPlayers(Communication.TOGGLE_PAUSE);
 			pauseAcceptedCount = 0;
 			
@@ -177,7 +177,7 @@ public class GameServer implements IServerMessageProcesser, IClientConnectedList
 	
 	public void clientConnected(ClientConnection connection) throws IOException {
 		System.out.println("Player Joined = " + connection.getUsername());
-		connection.sendMessage(Communication.ALLOW_JUMP_BACK + properties.allowsJumpBack());
+		ServerPropertiesIO.writeAll(connection, properties);
 		sendMessage(Communication.PLAYER_CONNECTED + connection.getUsername());
 		
 		for(ClientConnection conn : server.getConnections()) {
@@ -204,6 +204,13 @@ public class GameServer implements IServerMessageProcesser, IClientConnectedList
 		playing.remove(connection);
 	}
 	
+	public void propertiesUpdated() {
+		for(ClientConnection conn : server.getConnections()) {
+			if(conn == null || !conn.isRunning()) continue;
+			ServerPropertiesIO.writeAll(conn, properties);
+		}
+	}
+	
 	public void sendMessageToPlayers(String message) {
 		for(ClientConnection conn : playing) {
 			if(conn == null || !conn.isRunning()) continue;
@@ -215,8 +222,8 @@ public class GameServer implements IServerMessageProcesser, IClientConnectedList
 	public void sendMessage(String message) {
 		for(ClientConnection conn : server.getConnections()) {
 			if(conn == null || !conn.isRunning()) continue;
-			try { conn.sendMessage(message);
-			} catch(IOException e) { e.printStackTrace(); }
+			try { conn.sendMessage(message); }
+			catch(IOException e) { e.printStackTrace(); }
 		}
 	}
 	

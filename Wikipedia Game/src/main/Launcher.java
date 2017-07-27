@@ -175,6 +175,7 @@ public class Launcher extends JFrame {
 		usernameLabel.setBackground(new Color(255, 255, 255, 0));
 		
 		usernameTextFeild = new JTextField();
+		usernameTextFeild.setText("localhost");
 		usernameTextFeild.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		usernamePanel.add(usernameTextFeild, BorderLayout.CENTER);
 		usernameTextFeild.setColumns(25);
@@ -205,6 +206,7 @@ public class Launcher extends JFrame {
 		clientServerIpLabel.setBackground(new Color(255, 255, 255, 0));
 		
 		clientServerIpTextField = new JTextField();
+		clientServerIpTextField.setText("localhost");
 		clientServerIpTextField.setMaximumSize(new Dimension(500, 2147483647));
 		clientServerIpTextField.setHorizontalAlignment(SwingConstants.CENTER);
 		clientServerIpTextField.setFont(new Font("Tahoma", Font.PLAIN, 14));
@@ -278,6 +280,7 @@ public class Launcher extends JFrame {
 		serverServerInfoPanel.add(serverServerIpLabel);
 		
 		serverServerIpTextFeild = new JTextField();
+		serverServerIpTextFeild.setText("localhost");
 		serverServerIpTextFeild.setMaximumSize(new Dimension(500, 2147483647));
 		serverServerIpTextFeild.setHorizontalAlignment(SwingConstants.CENTER);
 		serverServerIpTextFeild.setFont(new Font("Tahoma", Font.PLAIN, 16));

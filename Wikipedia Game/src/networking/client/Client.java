@@ -7,15 +7,13 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 
+import networking.TransferProtocal;
 import networking.server.Server;
 
-public class Client implements Runnable {
+public class Client extends TransferProtocal implements Runnable {
 	private Socket serverConnection;
 	private InetAddress address;
 	private int port;
-	
-	private DataInputStream in;
-	private DataOutputStream out;
 	
 	private String username;
 	
@@ -29,6 +27,8 @@ public class Client implements Runnable {
 	}
 	
 	public Client(InetAddress address, int port, String username) {
+		super();
+		
 		this.address = address;
 		this.port = port;
 		this.username = username;
@@ -67,7 +67,8 @@ public class Client implements Runnable {
 					try { Thread.sleep(10); }  catch(InterruptedException e) {}
 				if(!running) continue;
 				
-				String read = in.readUTF();
+				String read = receiveMessage();
+				if(read == null) continue;
 				process(read);				
 				
 			} catch(IOException e) {
@@ -98,10 +99,6 @@ public class Client implements Runnable {
 			processer.process(this, read);
 	}
 	
-	public void sendMessage(String message) throws IOException {
-		out.writeUTF(message);
-	}
-
 	public boolean isRunning() { return running; }
 	public String getUsername() { return username; }
 }

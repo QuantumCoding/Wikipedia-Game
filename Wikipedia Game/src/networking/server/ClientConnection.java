@@ -5,13 +5,12 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class ClientConnection implements Runnable {
+import networking.TransferProtocal;
+
+public class ClientConnection extends TransferProtocal implements Runnable {
 
 	private Server server;
 	private Socket connection;
-	
-	private DataOutputStream out;
-	private DataInputStream in;
 	
 	private String username;
 	
@@ -19,6 +18,8 @@ public class ClientConnection implements Runnable {
 	private Thread thread;
 	
 	public ClientConnection(Server server, Socket connection) throws IOException {
+		super();
+		
 		this.server = server;
 		this.connection = connection;
 		
@@ -46,9 +47,9 @@ public class ClientConnection implements Runnable {
 					try { Thread.sleep(10); }  catch(InterruptedException e) {}
 				if(!running) continue;
 				
-				String read = in.readUTF();
+				String read = receiveMessage();
 				read = process(read);
-				if(!read.isEmpty())
+				if(read != null && !read.isEmpty())
 					server.process(this, read);
 				
 			} catch(IOException e) {
@@ -72,7 +73,7 @@ public class ClientConnection implements Runnable {
 			return; 
 		}
 		
-		out.writeUTF(message);
+		super.sendMessage(message);
 	}
 
 	public void disconnect() throws IOException {

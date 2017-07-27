@@ -36,6 +36,7 @@ public class RoundModel {
 		if(!isValid())
 			throw new IllegalStateException("Round Model does not contain enought Destinations");
 		
+		if(nextRound == this) nextRound = null;
 		return new Round(server, this);
 	}
 	

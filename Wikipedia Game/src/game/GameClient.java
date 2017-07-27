@@ -18,6 +18,7 @@ import game.structure.LogType;
 import interfaces.IClientInterface;
 import interfaces.IClientView;
 import interfaces.IClientViewFactory;
+import interfaces.ILoadListener;
 import interfaces.ISiteChangeListener;
 import interfaces.IWebBrowser;
 import networking.client.Client;
@@ -26,7 +27,7 @@ import networking.server.Server;
 import window.browser.WikipediaURLStreamHandlerFactory;
 import window.testing.SamShowFrameFactory;
 
-public class GameClient implements IClientMessageProcesser, IClientInterface, ISiteChangeListener {
+public class GameClient implements IClientMessageProcesser, IClientInterface, ISiteChangeListener, ILoadListener {
 	private Client client;
 	private IClientView view;
 	private ReadyPanel ready;
@@ -38,11 +39,14 @@ public class GameClient implements IClientMessageProcesser, IClientInterface, IS
 	private int currentDestinationIndex;
 	
 	private String username;
+	private ServerProperties properties;
 	
 	private Thread timerThread;
 	private long roundTimer;
 	private int  clickCount;
 	private boolean roundDone;
+	private boolean pauseTimer;
+	private boolean roundPaused;
 	
 	public GameClient(String username, InetAddress address, int port, IClientViewFactory viewFactory) throws IOException {
 		client = new Client(address, port, username);
@@ -57,6 +61,8 @@ public class GameClient implements IClientMessageProcesser, IClientInterface, IS
 			public void clear() {}
 		};
 
+		properties = new ServerProperties();
+				
 		view = viewFactory.createView(this);
 		ready = new ReadyPanel(this);
 		view.addReadyPanel(ready);
@@ -72,6 +78,7 @@ public class GameClient implements IClientMessageProcesser, IClientInterface, IS
 		
 		
 		view.getBrowser().addSiteChangeListener(this);
+		view.getBrowser().addLoadListener(this);
 	}
 	
 	public void process(Client connection, String message) throws IOException {
@@ -79,7 +86,7 @@ public class GameClient implements IClientMessageProcesser, IClientInterface, IS
 		if(connection != client) throw new IllegalArgumentException("Invalid Client");
 		
 		if(message.equals(Communication.REQUEST_PAUSE)) { view.pauseRequested(); return; }
-		if(message.equals(Communication.TOGGLE_PAUSE)) { view.togglePause(); return; }
+		if(message.equals(Communication.TOGGLE_PAUSE)) { view.togglePause(); roundPaused = !roundPaused; return; }
 		
 		if(message.startsWith(Communication.PAUSE_ACCEPTANCE_HAVE)) { view.setPercatageAgree(Integer.parseInt(message.substring(Communication.PAUSE_ACCEPTANCE_HAVE.length()))); return; }
 		if(message.startsWith(Communication.PAUSE_ACCEPTANCE_NEED)) { view.setPlayersNeedToPause(Integer.parseInt(message.substring(Communication.PAUSE_ACCEPTANCE_NEED.length()))); return; }
@@ -196,14 +203,22 @@ public class GameClient implements IClientMessageProcesser, IClientInterface, IS
 			nextDestination = startDestination;
 			view.setStartPage(nextDestination);
 			view.startNewRound();
-			currentDestinationIndex = -1;
-			
+
+			roundTimer = 0;
+			clickCount = -1;
 			roundDone = false;
-			clickCount = 0;
+			pauseTimer = false;
+			currentDestinationIndex = 0;
+			
 			timerThread = new Thread(() -> {
 				long lapStart = System.currentTimeMillis();
 				while(!roundDone) {
 					try { Thread.sleep(5); } catch(InterruptedException e) {}
+					if(pauseTimer || roundPaused) {
+						lapStart = System.currentTimeMillis();
+						continue;
+					}
+					
 					roundTimer += System.currentTimeMillis() - lapStart;
 					lapStart = System.currentTimeMillis();
 					
@@ -216,7 +231,11 @@ public class GameClient implements IClientMessageProcesser, IClientInterface, IS
 			return;
 		}
 		
-		if(message.startsWith(Communication.ALLOW_JUMP_BACK)) { view.allowJumpBack(Boolean.parseBoolean(message.substring(Communication.ALLOW_JUMP_BACK.length()))); return; }
+		if(message.startsWith(Communication.SERVER_PROPERTY_CHANGED)) { 
+			ServerPropertiesIO.read(this, message.substring(Communication.SERVER_PROPERTY_CHANGED.length()));
+			updateServerProperties();
+			return;
+		}
 		
 		System.err.println("Raw Data from Server: " + message);
 	}
@@ -230,6 +249,10 @@ public class GameClient implements IClientMessageProcesser, IClientInterface, IS
 	public void disconnect() { try { client.disconnect(); } catch(IOException e) { e.printStackTrace(); } }
 	
 	public String getUsername() { return username; }
+	
+	public void updateServerProperties() {
+		view.allowJumpBack(properties.allowJumpBack());
+	}
 	
 	public void siteChanged(String newSite, String oldSite) {
 		clickCount ++;
@@ -268,6 +291,11 @@ public class GameClient implements IClientMessageProcesser, IClientInterface, IS
 		siteChanged(processURLString(newSite), processURLString(oldSite));
 	}
 	
+	public void pageLoaded(IWebBrowser browser, float percentLoaded) {
+		System.out.println(percentLoaded);
+		pauseTimer = (percentLoaded / 100.0f) < properties.getLoadedPercentage();
+	}
+	
 	private String processURLString(String url) {
 		if(url == null) return "";
 		
@@ -280,6 +308,7 @@ public class GameClient implements IClientMessageProcesser, IClientInterface, IS
 	}
 	
 	public IClientView getView() { return view; } 
+	public ServerProperties getProperties() { return properties; }
 	
 	public static void main(String[] args) throws UnknownHostException, IOException {
 		URL.setURLStreamHandlerFactory(new WikipediaURLStreamHandlerFactory());

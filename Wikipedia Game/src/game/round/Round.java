@@ -59,10 +59,10 @@ public class Round {
 	public void checkReady() {
 		float readyPerc = (float) readyCount / server.getPlayerCount();
 		server.sendMessage(Communication.PLAYERS_READY_NEEDED + 
-				(int) Math.ceil(server.getPlayerCount() *  server.getProprties().getReadyPercenatge()));
+				(int) Math.ceil(server.getPlayerCount() *  server.getProprties().getReadyPercentage()));
 		server.sendMessage(Communication.PLAYERS_READY_RECALC + (int)(readyPerc * 100));
 		
-		if(server.getProprties().getReadyPercenatge() <= readyPerc)
+		if(server.getProprties().getReadyPercentage() <= readyPerc)
 			start();
 	}
 	
@@ -96,7 +96,7 @@ public class Round {
 		server.nextRoundStated();
 		playerCount = server.getPlayerCount();
 		
-		for(int i = server.getProprties().getCountDown(); i > 0; i --) {
+		for(int i = server.getProprties().getCountDownAmount(); i > 0; i --) {
 			server.sendMessage(Communication.COUNT_DOWN_ROUND + i);
 			try { Thread.sleep(2000); } catch(InterruptedException e) {}
 		}

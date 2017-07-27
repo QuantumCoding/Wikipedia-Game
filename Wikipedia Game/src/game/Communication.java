@@ -44,8 +44,8 @@ public class Communication {// X == Completed	/ == Not Applicable
 	public static final String PLAYER_QUIT = "i just cant";					//	     X  -  X    |    X  -  X  
 	
 	public static final String PLAYER_RANK = "new place in life";			//	     X  -  /    |    /  -  X 
-	public static final String PLAYER_WON = "winner winner";			//	     X  -  /    |    /  -  X 
+	public static final String PLAYER_WON = "winner winner";				//	     X  -  /    |    /  -  X 
     
 	// Server Property Change                                                     	  
-	public static final String ALLOW_JUMP_BACK = "do the jumpen";			//	     X  -  /    |    /  -  X   
+	public static final String SERVER_PROPERTY_CHANGED = "mix it up";		//	     X  -  /    |    /  -  X   
 }
